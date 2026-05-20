@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- * representoun usuario del sistema.
+ * Modelo de usuario con autenticacion, roles y permisos de acceso al dominio.
  */
 class User extends Authenticatable
 {
@@ -20,7 +20,7 @@ class User extends Authenticatable
     protected $hidden = ['password'];
 
     /**
-     *u usuario puede tener mas de un rol(no se si es asi)
+     * Relacion muchos a muchos con los roles funcionales del sistema.
      */
     public function roles()
     {
@@ -43,7 +43,7 @@ class User extends Authenticatable
     }
 
     /**
-     * comprueba si el usuario tiene un rol determinado
+     * Comprueba si el usuario tiene un rol concreto.
      */
     public function hasRole($role)
     {

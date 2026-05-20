@@ -1,58 +1,149 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Proyecto Fin de Ciclo 2025-2026
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Gestion de documentacion academica para cursos, PR y revisiones
 
-## About Laravel
+Este repositorio contiene el desarrollo del Proyecto Fin de Ciclo de DAM/DAW del curso 2025-2026. La aplicacion implementa una plataforma web para centralizar la gestion de cursos, PR, documentos, plantillas, variantes, revisiones y notificaciones dentro de un entorno academico.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+El objetivo del sistema es mejorar el seguimiento del trabajo documental asociado a cada curso y a cada PR, reducir tareas manuales de coordinacion y aportar trazabilidad sobre el estado de los materiales, los revisores asignados y la evolucion de cada variante generada.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Resumen del proyecto
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+La aplicacion permite:
 
-## Learning Laravel
+- autenticar usuarios y segmentar el acceso por roles;
+- consultar los cursos asignados a cada usuario;
+- crear y gestionar PR por curso;
+- registrar documentos por PR con plantilla asociada y tema cuando procede;
+- generar variantes versionadas de cada documento;
+- asignar revisores y docentes responsables;
+- controlar estados de revision y mantener historico;
+- emitir notificaciones cuando cambia el estado de una variante.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Contexto academico
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Este proyecto se presenta como Trabajo de Fin de Ciclo y se ha orientado a un escenario academico realista. En lugar de plantear una jerarquia empresarial de jefe-empleado, la aplicacion se documenta y estructura alrededor de perfiles funcionales propios del dominio educativo:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- gestor: administra cursos, PR, documentos y asignaciones;
+- docente: participa en el seguimiento de los PR asociados a sus cursos;
+- revisor: valida documentos y colabora en el control de calidad del material.
 
-## Agentic Development
+Este enfoque encaja mejor con una defensa academica porque permite justificar requisitos, roles y flujo de trabajo desde una necesidad organizativa concreta y verificable.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Tecnologias utilizadas
+
+- Backend: PHP 8.3 y Laravel 13.
+- Autenticacion API: Laravel Sanctum.
+- Base de datos: motor relacional compatible con migraciones de Laravel.
+- Frontend: Blade, JavaScript, Vite y Tailwind CSS.
+- Pruebas: PHPUnit 12.
+- Herramientas de calidad: Laravel Pint.
+
+## Motivos de eleccion
+
+Laravel aporta una estructura MVC clara, sistema de rutas, ORM, validacion, colas, autenticacion y migraciones, lo que permite desarrollar un proyecto de alcance medio con una base mantenible y bien documentada. Sanctum simplifica la emision de tokens para el consumo de la API. Vite y Tailwind facilitan una interfaz moderna con tiempos de desarrollo reducidos. PHPUnit y Pint cubren la base de verificacion y calidad del codigo.
+
+## Arquitectura de la solucion
+
+La aplicacion sigue una arquitectura web en capas sobre Laravel:
+
+- capa de presentacion: vistas Blade para la interfaz web y endpoints JSON para consumo desde frontend;
+- capa de control: controladores HTTP responsables de autenticacion, navegacion y operaciones de negocio;
+- capa de negocio: acciones en app/Actions para encapsular casos de uso como creacion de documentos, asignacion de revisores o actualizacion de estados;
+- capa de persistencia: modelos Eloquent y migraciones para cursos, PR, documentos, variantes, roles, plantillas, estados e historicos;
+- capa transversal: middleware, notificaciones y registro de actividad.
+
+## Modelo funcional
+
+Las entidades principales del sistema son:
+
+- Course: representa una unidad academica o curso.
+- PR: agrupa el trabajo documental asociado a un curso y su fase de desarrollo.
+- Document: define un documento concreto dentro de un PR.
+- DocumentVariant: almacena las versiones o entregas de un documento.
+- DocumentStatus y DocumentStatusHistory: gestionan estado actual e historico.
+- Plantilla: vincula prefijos y configuracion documental.
+- User y Role: controlan autenticacion y permisos.
+- Notificacion: registra avisos derivados de cambios relevantes.
+
+## Flujo principal de uso
+
+1. El usuario inicia sesion y el sistema determina los cursos accesibles segun su rol.
+2. Desde un curso se consultan los PR disponibles y su fase actual.
+3. En cada PR se crean documentos y se asocian plantillas, tema y revisores.
+4. Cada documento puede generar variantes versionadas con su estado de revision.
+5. Los cambios de estado desencadenan notificaciones para mantener la coordinacion.
+
+## Requisitos de ejecucion
+
+- PHP 8.3 o superior.
+- Composer.
+- Node.js y npm.
+- Base de datos compatible con Laravel.
+
+## Instalacion
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate
+npm install
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Si se quiere trabajar en desarrollo con todos los servicios locales:
 
-## Contributing
+```bash
+composer run dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Comandos utiles
 
-## Code of Conduct
+```bash
+php artisan serve
+php artisan test
+./vendor/bin/pint
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Estructura relevante del repositorio
 
-## Security Vulnerabilities
+```text
+app/
+	Actions/            Casos de uso de negocio
+	Http/Controllers/   Controladores web y API
+	Http/Middleware/    Control de acceso y trazabilidad
+	Models/             Modelos de dominio
+	Mail/               Correos de notificacion
+database/
+	migrations/         Esquema y evolucion del modelo de datos
+resources/
+	views/              Interfaz Blade
+routes/
+	web.php             Rutas web
+	api.php             Rutas API protegidas con Sanctum
+tests/
+	Unit/               Pruebas unitarias
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Estado actual
 
-## License
+El proyecto sigue en desarrollo y la documentacion final en PDF todavia debe completarse conforme a la rubrica del PFC. Este README actua como base tecnica y narrativa para la memoria, y deja definidos el contexto academico, la arquitectura, el alcance funcional y la justificacion tecnologica.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Correspondencia con la rubrica del PFC
+
+Este repositorio ya ofrece material reutilizable para varios apartados de la memoria:
+
+- Introduccion: contexto del problema, objetivo y usuarios.
+- Tecnologias utilizadas: stack y motivos de eleccion.
+- Arquitectura: organizacion por capas y responsabilidades.
+- Modelo de datos: entidades principales y relaciones.
+- Codificacion: validaciones, middleware, control de acceso y acciones.
+- Manuales: instalacion, puesta en marcha y flujo general.
+
+## Lineas de mejora para la memoria final
+
+- anadir diagramas UML de clases, secuencia y casos de uso;
+- documentar captacion de requisitos e historias de usuario;
+- ampliar el plan de pruebas con ejemplos ejecutables;
+- incorporar estudio de viabilidad economica, tecnica y de riesgos;
+- cerrar conclusiones y mejoras futuras con comparativa entre plan inicial y resultado real.

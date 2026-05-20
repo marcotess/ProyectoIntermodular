@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "pfc/gestion-documentacion-academica",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Proyecto Fin de Ciclo para la gestion academica de cursos, PR, documentos y revisiones.",
+    "keywords": ["pfc", "laravel", "gestion-documental", "academico", "dam", "daw"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

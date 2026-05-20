@@ -1,24 +1,21 @@
 <?php
 
 return [
-    // activar y desactivar toda la auditoria de acciones medianteb una variable de entorno
+    // Activa o desactiva toda la auditoria de actividad mediante variable de entorno.
     'enabled' => env('LOG_USER_ACTIVITY', true),
 
-    
     'log_authenticated_http_requests' => env('LOG_USER_HTTP_ACTIVITY', true),
 
-    // Solo interesan metodos que suelen implicar una cambio.Los get se dejan
-    // fuera para no llenar el log con navegacion normal por la interfaz
+    // Se registran solo metodos que suelen implicar cambios de estado.
+    // Las peticiones GET se excluyen para no saturar el log con navegacion normal.
     'http_methods' => ['POST', 'PUT', 'PATCH', 'DELETE'],
 
-    
     'ignored_routes' => [
         'login.submit',
         'logout',
     ],
 
-    // modelos del dominio que queremos auditar automaticamente mediante observer
-    // 
+    // Modelos del dominio auditados automaticamente mediante observer.
     'observed_models' => [
         App\Models\Course::class,
         App\Models\PR::class,
@@ -30,7 +27,7 @@ return [
         App\Models\Plantilla::class,
     ],
 
-    // atributos que no deben aparecer en el contexto del log
+    // Atributos que no deben incluirse en el contexto del log.
     'ignored_attributes' => [
         'password',
         'remember_token',
@@ -38,7 +35,7 @@ return [
         'updated_at',
     ],
 
-    //   canales de logging para diferentes tipos de actividad
+    // Canales de logging para los distintos tipos de actividad.
     'channels' => [
         'auth' => 'auth_activity',
         'model' => 'model_activity',

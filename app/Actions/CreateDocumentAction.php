@@ -12,8 +12,9 @@ use Illuminate\Support\Str;
 
 class CreateDocumentAction
 {
-
-	//
+	/**
+	 * Tipos documentales admitidos por el flujo de gestion del proyecto.
+	 */
 	private const DOCUMENT_TYPES = [
 		'DEFINICION',
 		'COMPETENCIA',
@@ -63,7 +64,7 @@ class CreateDocumentAction
 	];
 
 	/**
-	 * los tipos de documento disponibles
+	 * Devuelve los tipos de documento que pueden crearse en un PR.
 	 *
 	 * @return array<int, string>
 	 */
@@ -185,7 +186,9 @@ class CreateDocumentAction
 		return implode('-', $segments);
 	}
 
-	
+	/**
+	 * Crea un documento y su primera variante dentro de una transaccion.
+	 */
 	public function createDocument($prId, string $type, $userId, ?int $tema = null): Document
 	{
 		return DB::transaction(function () use ($prId, $type, $userId, $tema) {

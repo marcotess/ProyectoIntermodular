@@ -6,8 +6,9 @@ use App\Models\Course;
 
 class CoursesAction
 {
-
-    // listar todos los cursoslistar todos los cursos existentes
+    /**
+     * Recupera el listado completo de cursos registrados.
+     */
     public function listarCursos()
     {
         return Course::all();

@@ -535,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // El login API responde con token; se guarda para las siguientes peticiones JSON.
             storeApiToken(data.token);
 
-            window.location.assign('/home');
+            window.location.assign('/profile');
         });
     }
 

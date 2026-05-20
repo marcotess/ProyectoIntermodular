@@ -12,18 +12,23 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
-    //todos
-    Route::get('/home', [AuthController::class, 'home'])->name('home');
+    // Rutas comunes para cualquier usuario autenticado.
+    Route::get('/home', [AuthController::class, 'profile'])->name('home');
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::get('/courses', [AuthController::class, 'courses'])->name('courses.index');
+    Route::view('/tareas', 'tareas')->name('tasks.index');
     Route::get('/notificaciones', [App\Http\Controllers\NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::get('/notificaciones/{notificacion}', [App\Http\Controllers\NotificacionController::class, 'open'])->name('notificaciones.open');
-    //todos
+
+    // Navegacion y consulta del seguimiento por curso y PR.
     Route::get('/courses/{course}/prs', [App\Http\Controllers\PRController::class, 'index'])->name('courses.prs.index');
     Route::get('/courses/{course}/pr', [App\Http\Controllers\PRController::class, 'view'])->name('courses.pr.view');
     Route::get('/plantillas', [App\Http\Controllers\PlantillaController::class, 'index'])->name('plantillas.index');
 
-    //todos
+    // Vista y operaciones de lectura sobre la documentacion del PR.
     Route::get('/pr/{pr}/documentos', [App\Http\Controllers\PRDocumentController::class, 'index'])->name('pr.documentos.index');
-    //todos
+
+    // Actualizacion de estados de variantes accesible segun permisos de negocio.
     Route::post('/variant/{variant}/status/update', [App\Http\Controllers\VariantController::class, 'updateStatus'])->name('variant.status.update');
 
     Route::middleware('role:gestor')->group(function () {

@@ -9,8 +9,9 @@ use Illuminate\Support\Collection;
 class AssignReviewerAction
 {
 	/**
-	 * listar todos los revisores en el select de revisres.
-	 * solo listo los revisores que no esten asignados a ese dcumento 
+	 * Devuelve los revisores disponibles para asignar a un documento.
+	 *
+	 * Se excluyen los usuarios que ya estan asociados al documento.
 	 */
 	public function availableForDocument(Document $document): Collection
 	{
@@ -25,11 +26,11 @@ class AssignReviewerAction
 	}
 
 	/**
-	 * asiganarlo,
+	 * Asigna uno o varios revisores validos al documento.
 	 */
 	public function assign(Document $document, array $reviewerIds)
 	{
-		// solo los que sea revisres
+		// Solo se vinculan usuarios que tengan rol de revisor.
 		$validIds = User::whereIn('id', $reviewerIds)
 			->whereHas('roles', function($q) { $q->where('name', 'revisor'); })
 			->pluck('id')->toArray();
@@ -37,7 +38,7 @@ class AssignReviewerAction
 	}
 
 	/**
-	 * quitar al revisor del documento
+	 * Elimina la asignacion de un revisor sobre el documento.
 	 */
 	public function remove(Document $document, $reviewerId)
 	{

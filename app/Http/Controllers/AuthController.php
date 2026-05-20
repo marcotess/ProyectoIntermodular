@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
+use App\Models\Notificacion;
+use App\Models\PR;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -9,7 +12,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // nombre del tokken
+    /**
+     * Nombre del token emitido para el cliente web cuando se usa la API.
+     */
     private const API_TOKEN_NAME = 'web-client';
 
     private function isApiRequest(Request $request): bool
@@ -30,7 +35,7 @@ class AuthController extends Controller
 
     private function apiCoursePayloads(User $user): array
     {
-        return \App\Models\Course::query()
+        return Course::query()
             ->whereIn('id', $user->accessibleCourseIds())
             ->orderBy('code')
             ->get()
@@ -43,20 +48,44 @@ class AuthController extends Controller
             ->all();
     }
 
+    private function accessibleCourses(User $user)
+    {
+        return Course::query()
+            ->with([
+                'prs' => function ($query) {
+                    $query->with(['teachers', 'documents'])
+                        ->orderByDesc('number');
+                },
+            ])
+            ->whereIn('id', $user->accessibleCourseIds())
+            ->orderBy('code')
+            ->get();
+    }
+
+    private function recentNotifications(User $user, int $limit = 8)
+    {
+        return $user->notificaciones()
+            ->orderByRaw('fecha_lectura is null desc')
+            ->orderByDesc('fecha_envio')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+    }
+
     /**
-     * muestro el formulario(voy a cambiar las vistas seguramente)
+     * Muestra la pantalla de acceso para la interfaz web.
      */
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect('/home');
+            return redirect()->route('profile');
         }
 
         return view('login');
     }
 
     /**
-     * aqui valido credenciales y autentico al usuario. si es correcto lo redirijo a home. sino vuelvo al login con un error
+     * Valida las credenciales y autentica al usuario en web o API.
      */
     public function login(Request $request)
     {
@@ -88,7 +117,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect('/home');
+            return redirect()->route('profile');
         }
 
         return back()->withErrors([
@@ -97,7 +126,7 @@ class AuthController extends Controller
     }
 
     /**
-     *pagina de inicio despus de autenticar
+     * Devuelve la vista inicial o el listado de cursos accesibles en formato JSON.
      */
     public function home(Request $request)
     {
@@ -109,6 +138,36 @@ class AuthController extends Controller
         }
 
         $courses = \App\Models\Course::query()->whereIn('id', $user->accessibleCourseIds())->get();
+
+        return view('home', compact('courses'));
+    }
+
+    /**
+     * Muestra el perfil-resumen del usuario autenticado.
+     */
+    public function profile()
+    {
+        $user = Auth::user();
+        $courses = $this->accessibleCourses($user);
+        $recentNotifications = $this->recentNotifications($user);
+        $latestPr = $courses
+            ->flatMap(fn ($course) => $course->prs)
+            ->sortByDesc(function (PR $pr) {
+                return $pr->updated_at ?? $pr->created_at;
+            })
+            ->first();
+        $latestNotification = $recentNotifications->first();
+
+        return view('profile', compact('user', 'courses', 'recentNotifications', 'latestPr', 'latestNotification'));
+    }
+
+    /**
+     * Muestra la vista de cursos accesibles para el usuario.
+     */
+    public function courses()
+    {
+        $user = Auth::user();
+        $courses = $this->accessibleCourses($user);
 
         return view('home', compact('courses'));
     }

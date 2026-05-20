@@ -1,164 +1,79 @@
-<!DOCTYPE html>
-<html class="dark" lang="es">
+@extends('layouts.guest')
 
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="csrf-token" content="{{ csrf_token() }}"/>
-<title>Login - Course Management System</title>
+@section('title', 'Acceso | Gestion de Cursos')
 
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+@section('content')
+<main class="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-10">
+	<div class="absolute inset-0">
+		<div class="absolute left-[10%] top-[12%] h-40 w-40 rounded-full bg-[rgba(124,45,60,0.14)] blur-3xl"></div>
+		<div class="absolute bottom-[10%] right-[8%] h-56 w-56 rounded-full bg-[rgba(124,45,60,0.10)] blur-3xl"></div>
+	</div>
 
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+	<div class="relative z-10 w-full max-w-[1120px]">
+		<div class="mb-8 text-center">
+			<a href="{{ route('login') }}" class="brand-mark inline-block text-[22px] font-semibold uppercase text-[color:var(--accent-strong)] sm:text-[28px]">Gestion de Cursos</a>
+			<p class="mt-4 text-[12px] font-semibold uppercase tracking-[0.24em] text-[color:var(--muted)]">Acceso a la plataforma academica</p>
+		</div>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+		<div class="guest-surface grid overflow-hidden rounded-[32px] lg:grid-cols-[1.1fr_0.9fr]">
+			<section class="hidden border-r border-[color:var(--line)] px-8 py-10 lg:flex lg:flex-col lg:justify-between xl:px-12">
+				<div>
+					<div class="inline-flex rounded-full border border-[color:var(--line)] bg-white/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Entorno de gestion</div>
+					<h1 class="mt-8 max-w-[14ch] text-4xl font-extrabold leading-tight text-[color:var(--ink)] xl:text-5xl">Una entrada mas clara, profesional y actual.</h1>
+					<p class="mt-6 max-w-[52ch] text-[15px] leading-8 text-[color:var(--muted)]">La plataforma centraliza cursos, PR, documentos, revisiones y notificaciones en una interfaz unificada pensada para el seguimiento academico diario.</p>
+				</div>
 
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-@if (file_exists(public_path('build/manifest.json')))
-@vite(['resources/js/app.js'])
-@endif
+				<div class="grid gap-4 sm:grid-cols-3">
+					<article class="rounded-[24px] border border-[color:var(--line)] bg-white/70 p-5">
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Cursos</p>
+						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Acceso ordenado a los cursos disponibles por perfil.</p>
+					</article>
+					<article class="rounded-[24px] border border-[color:var(--line)] bg-white/70 p-5">
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Revision</p>
+						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Seguimiento de PR, documentos y estados versionados.</p>
+					</article>
+					<article class="rounded-[24px] border border-[color:var(--line)] bg-white/70 p-5">
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Avisos</p>
+						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Notificaciones recientes para mantener la trazabilidad.</p>
+					</article>
+				</div>
+			</section>
 
-<style type="text/tailwindcss">
-@layer base {
-body{
-font-family:'Inter',sans-serif;
-background-color:#0f1115;
-}
-}
+			<section class="px-6 py-8 sm:px-10 sm:py-10 xl:px-12">
+				<div class="mx-auto max-w-[420px]">
+					<p class="text-[11px] font-semibold uppercase tracking-[0.20em] text-[color:var(--accent-strong)]">Iniciar sesion</p>
+					<h2 class="mt-3 text-3xl font-extrabold text-[color:var(--ink)]">Accede a tu espacio de trabajo</h2>
+					<p class="mt-3 text-[14px] leading-7 text-[color:var(--muted)]">Usa tus credenciales para consultar cursos, PR, documentos y notificaciones desde una interfaz mas cuidada.</p>
 
-:root{
---primary-color:#f97316;
---surface-color:#1a1d23;
-}
+					@if ($errors->any())
+						<div id="login-error" class="mt-6 rounded-2xl border border-[rgba(160,63,81,0.22)] bg-[rgba(160,63,81,0.08)] px-4 py-3 text-[13px] text-[color:var(--danger)]">{{ $errors->first() }}</div>
+					@else
+						<div id="login-error" class="mt-6 hidden rounded-2xl border border-[rgba(160,63,81,0.22)] bg-[rgba(160,63,81,0.08)] px-4 py-3 text-[13px] text-[color:var(--danger)]"></div>
+					@endif
 
-.minimal-input{
-background-color:transparent;
-border:1px solid rgba(255,255,255,0.1);
-transition:all .2s ease;
-}
+					<form method="POST" action="{{ route('login.submit') }}" data-api-login-form class="mt-8 space-y-5">
+						@csrf
 
-.minimal-input:focus{
-border-color:var(--primary-color);
-outline:none;
-}
-</style>
+						<div>
+							<label for="email" class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Correo electronico</label>
+							<input id="email" name="email" type="email" required class="field-shell h-14 w-full rounded-2xl px-4 text-[15px] text-[color:var(--ink)] placeholder:text-[color:var(--muted)]" placeholder="nombre@ejemplo.com" />
+						</div>
 
-<script>
-tailwind.config={
-darkMode:"class",
-theme:{
-extend:{
-colors:{
-primary:"#f97316",
-surface:"#1a1d23",
-},
-fontFamily:{
-sans:["Inter","sans-serif"],
-mono:["JetBrains Mono","monospace"],
-}
-}
-}
-}
-</script>
+						<div>
+							<label for="password" class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Contrasena</label>
+							<input id="password" name="password" type="password" required class="field-shell h-14 w-full rounded-2xl px-4 text-[15px] text-[color:var(--ink)] placeholder:text-[color:var(--muted)]" placeholder="Introduce tu contrasena" />
+						</div>
 
-</head>
+						<button type="submit" class="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-[color:var(--accent)] px-6 py-4 text-[12px] font-bold uppercase tracking-[0.20em] text-white shadow-[0_18px_36px_rgba(124,45,60,0.22)] transition hover:bg-[color:var(--accent-strong)] active:scale-[0.99]">Acceder a la aplicacion</button>
+					</form>
 
-<body class="h-screen flex flex-col items-center justify-center p-6">
-
-<div class="mb-12 text-center">
-<h2 class="text-white/40 text-[11px] font-medium tracking-[0.5em] uppercase">
-Registro de documentación de cursos
-</h2>
-</div>
-
-<div class="w-full max-w-[420px] bg-surface border border-white/[0.08] rounded-xl p-10 shadow-2xl">
-
-<div class="flex flex-col items-center mb-8">
-<div class="w-16 h-16 rounded-full border border-white/[0.1] flex items-center justify-center mb-6 bg-white/[0.02]">
-<span class="material-symbols-outlined text-slate-400 text-3xl">person</span>
-</div>
-
-<h1 class="text-white text-[13px] font-semibold tracking-[0.3em] uppercase">
-Iniciar Sesión
-</h1>
-</div>
-
-
-@if ($errors->any())
-<div id="login-error" class="mb-6 text-red-400 text-sm">
-{{$errors->first()}}
-</div>
-@else
-<div id="login-error" class="mb-6 text-red-400 text-sm hidden"></div>
-@endif
-
-
-<form method="POST" action="/login" class="space-y-6">
-
-@csrf
-
-<div class="space-y-1">
-
-<label class="text-[9px] uppercase font-bold text-slate-500 tracking-[0.2em] ml-1">
-Email
-</label>
-
-<input
-name="email"
-type="email"
-required
-class="w-full h-12 px-4 rounded-md minimal-input text-slate-200 text-sm placeholder:text-slate-700"
-placeholder="nombre@ejemplo.com"
-/>
-
-</div>
-
-
-<div class="space-y-1">
-
-<label class="text-[9px] uppercase font-bold text-slate-500 tracking-[0.2em] ml-1">
-Contraseña
-</label>
-
-<div class="relative">
-
-<input
-name="password"
-type="password"
-required
-class="w-full h-12 px-4 rounded-md minimal-input text-slate-200 text-sm placeholder:text-slate-700"
-placeholder="••••••••"
-/>
-
-</div>
-
-</div>
-
-
-<div class="pt-4">
-
-<button
-type="submit"
-class="w-full py-4 bg-white/[0.04] hover:bg-white/[0.08] text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded border border-white/[0.1] transition-all active:scale-[0.98]"
->
-
-Entrar al Sistema
-
-</button>
-
-</div>
-
-</form>
-
-
-<div class="mt-10 pt-8 border-t border-white/[0.04] text-center">
-<p class="text-[10px] text-slate-600 uppercase tracking-widest">
-Gestión de Cursos © 2024
-</p>
-</div>
-
-</div>
-
-</body>
-</html>
+					<div class="mt-8 rounded-[24px] border border-[color:var(--line)] bg-white/70 px-5 py-4">
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Acceso centralizado</p>
+						<p class="mt-2 text-[13px] leading-6 text-[color:var(--muted)]">Tras iniciar sesion, el sistema te llevara al perfil y desde ahi podras navegar a cursos, plantillas, tareas y notificaciones.</p>
+					</div>
+				</div>
+			</section>
+		</div>
+	</div>
+</main>
+@endsection
