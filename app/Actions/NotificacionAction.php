@@ -3,14 +3,18 @@
 namespace App\Actions;
 
 use App\Mail\DocumentStatusNotificationMail;
+use App\Models\ChatMessage;
 use App\Models\Document;
 use App\Models\Notificacion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
+// desde aqui salen los avisos visibles y varios correos, osea que es una pieza bastante central.
 class NotificacionAction
 {
 
@@ -27,9 +31,11 @@ class NotificacionAction
     {
         $document->loadMissing(['pr.teachers', 'reviewers']);
 
-        $recipients = match ($statusName) {
+        $reviewers = $document->reviewers;
+
+        $statusRecipients = match ($statusName) {
             '01_desarrollo' => $document->pr->teachers,
-            '02_candidato' => $document->reviewers,
+            '02_candidato' => collect(),
             '03_produccion' => User::query()
                 ->whereHas('roles', function ($query) {
                     $query->where('name', 'gestor');
@@ -37,6 +43,11 @@ class NotificacionAction
                 ->get(),
             default => collect(),
         };
+
+        $recipients = $reviewers
+            ->concat($statusRecipients)
+            ->unique('id')
+            ->values();
 
         if ($recipients->isEmpty()) {
             return;
@@ -50,7 +61,7 @@ class NotificacionAction
         $link = route('pr.documentos.index', ['pr' => $document->pr_id]) . '#document-' . $document->id;
         $sentAt = Carbon::now();
 
-        foreach ($recipients->unique('id') as $recipient) {
+        foreach ($recipients as $recipient) {
             Notificacion::create([
                 'tema' => 'Documento en ' . $label,
                 'user_id' => $recipient->id,
@@ -60,9 +71,29 @@ class NotificacionAction
             ]);
 
             DB::afterCommit(function () use ($recipient, $label, $message, $link): void {
-                $this->sendNotificationMail($recipient, $label, $message, $link);
+                try {
+                    $this->sendNotificationMail($recipient, $label, $message, $link);
+                } catch (Throwable $exception) {
+                    Log::warning('No se pudo enviar el correo de notificacion del documento.', [
+                        'recipient_id' => $recipient->id,
+                        'recipient_email' => $recipient->email,
+                        'label' => $label,
+                        'error' => $exception->getMessage(),
+                    ]);
+                }
             });
         }
+    }
+
+    public function notifyChatMessage(User $sender, User $recipient): void
+    {
+        Notificacion::create([
+            'tema' => 'Nuevo mensaje de chat',
+            'user_id' => $recipient->id,
+            'mensaje' => sprintf('%s te ha enviado un mensaje nuevo por el chat.', $sender->name),
+            'link' => route('chat.show', ['contact' => $sender->id]),
+            'fecha_envio' => Carbon::now(),
+        ]);
     }
 
     public function markAsReadForUser(Notificacion $notificacion, User $user): Notificacion
@@ -90,6 +121,10 @@ class NotificacionAction
 
     private function sendNotificationMail(User $recipient, string $label, string $message, string $link): void
     {
+        if (! $recipient->receive_notification_emails) {
+            return;
+        }
+
         $deliveryMailer = (string) config('mail.delivery_mailer', config('mail.default'));
         $logMailer = (string) config('mail.log_mailer', 'log');
         $shouldLogCopy = (bool) config('mail.log_copy', true);

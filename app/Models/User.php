@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -11,18 +12,35 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * Modelo de usuario con autenticacion, roles y permisos de acceso al dominio.
  */
+// aqui se mezcla identidad, permisos y parte del acceso al dominio. manda bastante mas de lo que parece.
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password'];
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'receive_notification_emails',
+        'theme_preference',
+        'compact_tables',
+        'reduce_motion',
+        'show_quick_notifications',
+    ];
 
     protected $hidden = ['password'];
+
+    protected $casts = [
+        'receive_notification_emails' => 'boolean',
+        'compact_tables' => 'boolean',
+        'reduce_motion' => 'boolean',
+        'show_quick_notifications' => 'boolean',
+    ];
 
     /**
      * Relacion muchos a muchos con los roles funcionales del sistema.
      */
-    public function roles()
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
     }
@@ -42,6 +60,16 @@ class User extends Authenticatable
         return $this->hasMany(Notificacion::class);
     }
 
+    public function sentChatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class, 'sender_id');
+    }
+
+    public function receivedChatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class, 'recipient_id');
+    }
+
     /**
      * Comprueba si el usuario tiene un rol concreto.
      */
@@ -56,6 +84,16 @@ class User extends Authenticatable
     public function hasAnyRole(array $roles): bool
     {
         return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
+    public function canBeChatContact(): bool
+    {
+        return $this->hasAnyRole(['gestor', 'docente', 'revisor']);
+    }
+
+    public function canChatWith(User $user): bool
+    {
+        return $this->id !== $user->id && $user->canBeChatContact();
     }
 
     public function tokenRoleAbilities(): array

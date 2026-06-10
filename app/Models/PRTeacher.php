@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class PRTeacher extends Model
 {
     protected $table = 'pr_teachers';
-
     protected $fillable = [
         'pr_id',
         'user_id',

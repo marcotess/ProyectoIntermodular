@@ -2,12 +2,18 @@
 
 @section('title', 'Documentos | Gestion de Cursos')
 @section('activeNav', 'courses')
-@section('pageTitle', 'Documentos del PR #' . $pr->number)
+@section('pageTitle', $pr->nombre ?: 'Proyecto ' . $pr->number)
 @section('pageSubtitle', 'Gestion documental del curso ' . $pr->course->code . ' - ' . $pr->course->name . ', incluyendo variantes, plantillas, estado y revisores asociados.')
 
 @section('pageActions')
+    @if($canEditTema)
+        <button type="button" data-project-name-toggle aria-controls="project-name-editor" aria-expanded="false" onclick="showProjectNameEditor()" class="ui-button-soft inline-flex items-center gap-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+            Editar
+        </button>
+    @endif
     @if($isGestor)
-        <button onclick="showCreateDocumentForm()" class="ui-button-primary inline-flex items-center gap-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">
+        <button type="button" data-document-form-toggle aria-controls="create-document-form" aria-expanded="{{ $errors->any() || session('status') ? 'true' : 'false' }}" onclick="showCreateDocumentForm()" class="ui-button-primary inline-flex items-center gap-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">
             <span class="material-symbols-outlined text-[18px]">add</span>
             Crear documento
         </button>
@@ -15,42 +21,81 @@
 @endsection
 
 @section('content')
+    @php
+        $showCreateDocumentForm = $errors->any() || session('status');
+        $projectName = $pr->nombre ?: 'Proyecto ' . $pr->number;
+    @endphp
+
+    @if($canEditTema)
+        <section id="project-name-editor" role="region" aria-label="Editor del nombre del proyecto" aria-hidden="true" class="hidden app-surface-strong mb-6 rounded-[28px] p-6 lg:max-w-[720px]">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Proyecto {{ $pr->number }}</p>
+                    <h2 class="mt-2 text-xl font-extrabold text-[color:var(--ink)]">Editar nombre del proyecto</h2>
+                </div>
+                <button type="button" aria-label="Cerrar editor del nombre del proyecto" onclick="hideProjectNameEditor()" class="rounded-full border border-[color:var(--line)] bg-white p-2 text-[color:var(--accent-strong)] transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--accent-soft)]" title="Cerrar">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input id="pr-name-input" type="text" value="{{ $projectName }}" maxlength="255" class="ui-field w-full rounded-2xl px-4 py-3 text-[14px]" />
+                <button type="button" onclick="updateProjectName({{ $pr->id }})" class="ui-button-primary rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Guardar</button>
+                <button type="button" onclick="hideProjectNameEditor()" class="ui-button-soft rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Cancelar</button>
+            </div>
+        </section>
+    @endif
+
     @if($isGestor)
-        <div id="create-document-form" class="app-surface-strong hidden mb-6 rounded-[28px] p-6 lg:max-w-[560px]">
+        <div id="create-document-form" role="region" aria-label="Formulario de creación de documento" aria-hidden="{{ $showCreateDocumentForm ? 'false' : 'true' }}" class="{{ $showCreateDocumentForm ? '' : 'hidden' }} app-surface-strong mb-6 rounded-[28px] p-6 lg:max-w-[560px]">
             <div class="flex items-center justify-between gap-4">
                 <div>
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Nuevo documento</p>
                     <h2 class="mt-2 text-xl font-extrabold text-[color:var(--ink)]">Alta documental</h2>
                 </div>
-                <button onclick="hideCreateDocumentForm()" class="rounded-full border border-[color:var(--line)] bg-white p-2 text-[color:var(--accent-strong)] transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--accent-soft)]" title="Cerrar">
+                <button type="button" aria-label="Cerrar formulario de creación de documento" onclick="hideCreateDocumentForm()" class="rounded-full border border-[color:var(--line)] bg-white p-2 text-[color:var(--accent-strong)] transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--accent-soft)]" title="Cerrar">
                     <span class="material-symbols-outlined text-[18px]">close</span>
                 </button>
             </div>
-            <div class="mt-5 space-y-4">
+
+            @if(session('status'))
+                <div role="status" class="mt-5 rounded-2xl border border-[rgba(47,111,89,0.22)] bg-[rgba(47,111,89,0.08)] px-4 py-3 text-[13px] text-[color:var(--success)]">{{ session('status') }}</div>
+            @endif
+
+            @if($errors->any())
+                <div role="alert" class="mt-5 rounded-2xl border border-[rgba(160,63,81,0.22)] bg-[rgba(160,63,81,0.08)] px-4 py-3 text-[13px] text-[color:var(--danger)]">{{ $errors->first() }}</div>
+            @endif
+
+            <form method="POST" action="{{ route('pr.documentos.create', ['pr' => $pr->id]) }}" class="mt-5 space-y-4">
+                @csrf
                 <div>
                     <label for="document-type" class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Tipo de documento</label>
-                    <select id="document-type" class="ui-select w-full rounded-2xl px-4 py-3 text-[14px]">
+                    <select id="document-type" name="type" class="ui-select w-full rounded-2xl px-4 py-3 text-[14px]" required>
                         <option value="" selected disabled>Selecciona un tipo</option>
                         @foreach($documentTypes as $type)
-                            <option value="{{ $type }}">{{ str_replace('_', ' ', $type) }}</option>
+                            <option value="{{ $type }}" @selected(old('type') === $type)>{{ str_replace('_', ' ', $type) }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div id="document-tema-wrapper" class="hidden">
+
+                <div id="document-tema-wrapper">
                     <label for="document-tema" class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Tema</label>
-                    <input id="document-tema" type="number" step="1" class="ui-field w-full rounded-2xl px-4 py-3 text-[14px]" placeholder="Introduce un numero de tema" disabled />
+                    <input id="document-tema" name="tema" type="number" step="1" value="{{ old('tema') }}" class="ui-field w-full rounded-2xl px-4 py-3 text-[14px]" placeholder="Introduce un numero de tema si aplica" />
+                    <p class="mt-2 text-[12px] text-[color:var(--muted)]">Solo algunos tipos usan tema. Si no aplica, deja este campo vacio. El documento se vinculara a la ultima plantilla disponible de ese tipo.</p>
                 </div>
+
                 <div class="flex flex-wrap gap-3">
-                    <button onclick="createDocument({{ $pr->id }})" class="ui-button-primary rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Crear</button>
-                    <button onclick="hideCreateDocumentForm()" class="ui-button-soft rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Cancelar</button>
+                    <button type="submit" class="ui-button-primary rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Crear</button>
+                    <button type="button" onclick="hideCreateDocumentForm()" class="ui-button-soft rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Cancelar</button>
                 </div>
-            </div>
+            </form>
         </div>
     @endif
 
-    <div class="app-surface-strong overflow-hidden rounded-[28px] border border-[color:var(--line)]">
+    <div id="documents-list" class="app-surface-strong overflow-hidden rounded-[28px] border border-[color:var(--line)]">
         <div class="overflow-x-auto user-scroll">
             <table class="page-table min-w-[1280px] border-collapse text-left text-[13px]">
+                <caption class="sr-only">Listado de documentos del proyecto con plantilla, tema, estado, revisores y variantes.</caption>
                 <thead>
                     <tr class="border-b border-[color:var(--line)]">
                         <th class="w-16 px-5 py-4 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Ver</th>
@@ -76,9 +121,9 @@
                             $canDeleteDocument = $variants->isEmpty();
                             $plantillasDisponibles = $plantillasByType[$document->type] ?? collect();
                         @endphp
-                        <tr id="document-{{ $document->id }}" onclick="toggleVariants({{ $document->id }})" class="cursor-pointer border-b border-[color:var(--line)] last:border-b-0 transition-colors">
+                        <tr id="document-{{ $document->id }}" class="border-b border-[color:var(--line)] last:border-b-0 transition-colors">
                             <td class="px-5 py-4 text-center">
-                                <button onclick="event.stopPropagation(); toggleVariants({{ $document->id }})" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--line)] bg-white text-[color:var(--accent-strong)] hover:bg-[color:var(--accent-soft)]" title="Ver variantes">
+                                <button type="button" aria-controls="variants-row-{{ $document->id }}" aria-expanded="false" aria-label="Mostrar u ocultar variantes del documento {{ $document->short_title }}" onclick="event.stopPropagation(); toggleVariants({{ $document->id }})" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--line)] bg-white text-[color:var(--accent-strong)] hover:bg-[color:var(--accent-soft)]" title="Ver variantes">
                                     <span id="variants-icon-{{ $document->id }}" class="material-symbols-outlined text-[18px] transition-transform duration-200">keyboard_arrow_down</span>
                                 </button>
                             </td>
@@ -169,16 +214,23 @@
                                 @endif
                             </td>
                             <td class="px-5 py-4 text-center">
-                                @if($isGestor)
-                                    <button onclick="event.stopPropagation(); removeDocument({{ $document->id }})" class="rounded-full px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors {{ $canDeleteDocument ? 'bg-[color:var(--danger)] text-white hover:opacity-90' : 'cursor-not-allowed bg-gray-200 text-gray-400' }}" title="{{ $canDeleteDocument ? 'Eliminar documento' : 'Borra antes todas las variantes' }}" {{ $canDeleteDocument ? '' : 'disabled' }}>
-                                        <span class="material-symbols-outlined text-[16px]">delete</span>
-                                    </button>
-                                @else
-                                    <span class="text-[color:var(--muted)]">-</span>
-                                @endif
+                                <div class="flex items-center justify-center gap-2">
+                                    @if($document->latestVariant && $document->latestVariant->drive_link_url)
+                                        <a href="{{ route('variant.open', ['variant' => $document->latestVariant->id]) }}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center justify-center rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--accent-strong)] transition hover:bg-[color:var(--accent-soft)]" title="Abrir archivo actual">
+                                            <span class="material-symbols-outlined text-[16px]">description</span>
+                                        </a>
+                                    @endif
+                                    @if($isGestor)
+                                        <button onclick="event.stopPropagation(); removeDocument({{ $document->id }})" class="rounded-full px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors {{ $canDeleteDocument ? 'bg-[color:var(--danger)] text-white hover:opacity-90' : 'cursor-not-allowed bg-gray-200 text-gray-400' }}" title="{{ $canDeleteDocument ? 'Eliminar documento' : 'Borra antes todas las variantes' }}" {{ $canDeleteDocument ? '' : 'disabled' }}>
+                                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                                        </button>
+                                    @elseif(! $document->latestVariant || ! $document->latestVariant->drive_link_url)
+                                        <span class="text-[color:var(--muted)]">-</span>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
-                        <tr id="variants-row-{{ $document->id }}" class="hidden bg-[rgba(124,45,60,0.03)]">
+                        <tr id="variants-row-{{ $document->id }}" aria-hidden="true" class="hidden bg-[rgba(124,45,60,0.03)]">
                             <td colspan="11" class="px-6 py-5">
                                 <div class="rounded-[24px] border border-[color:var(--line)] bg-white/80 p-5">
                                     <div class="mb-4 flex items-center justify-between">
@@ -223,7 +275,7 @@
                                                             <td class="px-4 py-3 text-[color:var(--muted)]">{{ $variant->deadline_target ? \Illuminate\Support\Carbon::parse($variant->deadline_target)->format('d/m/Y H:i') : 'Sin fecha' }}</td>
                                                             <td class="px-4 py-3 text-[color:var(--muted)]">
                                                                 @if($variant->drive_link_url)
-                                                                    <a href="{{ $variant->drive_link_url }}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()" class="font-semibold text-[color:var(--accent-strong)] hover:underline">Abrir</a>
+                                                                    <a href="{{ route('variant.open', ['variant' => $variant->id]) }}" target="_blank" rel="noreferrer" onclick="event.stopPropagation()" class="font-semibold text-[color:var(--accent-strong)] hover:underline">Abrir</a>
                                                                 @else
                                                                     Sin enlace
                                                                 @endif
@@ -248,7 +300,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="11" class="px-5 py-10 text-center text-[14px] text-[color:var(--muted)]">No hay documentos para este PR.</td>
+                            <td colspan="11" class="px-5 py-10 text-center text-[14px] text-[color:var(--muted)]">No hay documentos para este proyecto.</td>
                         </tr>
                         @endforelse
                 </tbody>
@@ -258,5 +310,260 @@
 
     <script>
         window.documentTemaTypes = @json($temaEligibleTypes);
+    </script>
+    <script>
+        (function () {
+            function csrfToken() {
+                return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            }
+
+            async function postJson(url, payload) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken() || '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify(payload ?? {}),
+                });
+
+                const data = await response.json().catch(() => ({}));
+                return { response, data };
+            }
+
+            function toggleVisibility(elementId, hidden) {
+                const element = document.getElementById(elementId);
+
+                if (!element) {
+                    return;
+                }
+
+                element.classList.toggle('hidden', hidden);
+                element.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+            }
+
+            window.showProjectNameEditor = function showProjectNameEditor() {
+                toggleVisibility('project-name-editor', false);
+                document.querySelector('[data-project-name-toggle]')?.setAttribute('aria-expanded', 'true');
+            };
+
+            window.hideProjectNameEditor = function hideProjectNameEditor() {
+                toggleVisibility('project-name-editor', true);
+                document.querySelector('[data-project-name-toggle]')?.setAttribute('aria-expanded', 'false');
+            };
+
+            function typeSupportsTema(type) {
+                return Array.isArray(window.documentTemaTypes) && window.documentTemaTypes.includes(type);
+            }
+
+            window.toggleVariants = function toggleVariants(documentId) {
+                const row = document.getElementById(`variants-row-${documentId}`);
+                const icon = document.getElementById(`variants-icon-${documentId}`);
+
+                if (!row || !icon) {
+                    return;
+                }
+
+                const willHide = !row.classList.contains('hidden');
+
+                row.classList.toggle('hidden');
+                row.setAttribute('aria-hidden', willHide ? 'true' : 'false');
+                document.querySelector('[aria-controls="variants-row-' + documentId + '"]')?.setAttribute('aria-expanded', willHide ? 'false' : 'true');
+                icon.classList.toggle('rotate-180');
+            };
+
+            window.showEditRevisores = function showEditRevisores(documentId) {
+                toggleVisibility(`revisores-list-${documentId}`, true);
+                toggleVisibility(`revisores-edit-${documentId}`, false);
+            };
+
+            window.hideEditRevisores = function hideEditRevisores(documentId) {
+                toggleVisibility(`revisores-edit-${documentId}`, true);
+                toggleVisibility(`revisores-list-${documentId}`, false);
+                window.hideAddRevisor(documentId);
+            };
+
+            window.showAddRevisor = function showAddRevisor(documentId) {
+                toggleVisibility(`add-revisor-select-${documentId}`, false);
+            };
+
+            window.hideAddRevisor = function hideAddRevisor(documentId) {
+                toggleVisibility(`add-revisor-select-${documentId}`, true);
+            };
+
+            window.addRevisor = async function addRevisor(documentId) {
+                const select = document.getElementById(`add-revisor-${documentId}`);
+
+                if (!select?.value || select.selectedOptions[0]?.disabled) {
+                    alert('No hay revisores disponibles para agregar');
+                    return;
+                }
+
+                const { response, data } = await postJson(`/document/${documentId}/revisores/add`, {
+                    revisores: [select.value],
+                });
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al agregar revisor');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.removeRevisor = async function removeRevisor(documentId, revisorId) {
+                const { response, data } = await postJson(`/document/${documentId}/revisores/remove/${revisorId}`);
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al quitar revisor');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.updateDocumentPlantilla = async function updateDocumentPlantilla(documentId) {
+                const plantillaId = document.getElementById(`plantilla-select-${documentId}`)?.value;
+
+                if (!plantillaId) {
+                    alert('Selecciona una plantilla');
+                    return;
+                }
+
+                const { response, data } = await postJson(`/document/${documentId}/plantilla/update`, {
+                    plantilla_id: plantillaId,
+                });
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al cambiar la plantilla');
+                    window.location.reload();
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.updateDocumentTema = async function updateDocumentTema(documentId) {
+                const temaInput = document.getElementById(`tema-input-${documentId}`);
+                const tema = temaInput?.value === '' ? null : Number.parseInt(temaInput.value, 10);
+
+                if (!temaInput) {
+                    return;
+                }
+
+                if (temaInput.value !== '' && Number.isNaN(tema)) {
+                    alert('Introduce un numero de tema valido');
+                    return;
+                }
+
+                const { response, data } = await postJson(`/document/${documentId}/tema/update`, { tema });
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al cambiar el tema');
+                    window.location.reload();
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.createVariant = async function createVariant(documentId) {
+                const { response, data } = await postJson(`/document/${documentId}/variants/create`);
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al crear variante');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.updateVariantStatus = async function updateVariantStatus(variantId, statusId) {
+                const { response, data } = await postJson(`/variant/${variantId}/status/update`, {
+                    status_id: statusId,
+                });
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al cambiar estado');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.removeVariant = async function removeVariant(variantId) {
+                if (!window.confirm('¿Seguro que quieres borrar esta variante?')) {
+                    return;
+                }
+
+                const { response, data } = await postJson(`/variant/${variantId}/remove`);
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al borrar variante');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.removeDocument = async function removeDocument(documentId) {
+                if (!window.confirm('¿Seguro que quieres eliminar este documento?')) {
+                    return;
+                }
+
+                const { response, data } = await postJson(`/document/${documentId}/remove`);
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al eliminar documento');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            window.updateProjectName = async function updateProjectName(prId) {
+                const nombre = document.getElementById('pr-name-input')?.value?.trim();
+
+                if (!nombre) {
+                    alert('El nombre del proyecto es obligatorio');
+                    return;
+                }
+
+                const { response, data } = await postJson(`/pr/${prId}/nombre/update`, { nombre });
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Error al actualizar el nombre del proyecto');
+                    return;
+                }
+
+                window.location.reload();
+            };
+
+            const documentTypeSelect = document.getElementById('document-type');
+            const temaWrapper = document.getElementById('document-tema-wrapper');
+            const temaInput = document.getElementById('document-tema');
+
+            function syncCreateDocumentTemaInput() {
+                if (!documentTypeSelect || !temaWrapper || !temaInput) {
+                    return;
+                }
+
+                const supportsTema = typeSupportsTema(documentTypeSelect.value);
+                temaWrapper.classList.toggle('opacity-60', !supportsTema && documentTypeSelect.value !== '');
+                temaInput.disabled = !supportsTema;
+
+                if (!supportsTema) {
+                    temaInput.value = '';
+                }
+            }
+
+            if (documentTypeSelect) {
+                documentTypeSelect.addEventListener('change', syncCreateDocumentTemaInput);
+                syncCreateDocumentTemaInput();
+            }
+        }());
     </script>
 @endsection

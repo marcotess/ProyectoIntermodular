@@ -8,7 +8,6 @@ use Illuminate\Support\Collection;
 class DocumentStatus extends Model
 {
     protected $fillable = ['name'];
-
     public const ACTIVE_STATUSES = [
         '01_desarrollo',
         '02_candidato',

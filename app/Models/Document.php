@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+// este modelo junta las relaciones importantes del documento y deja la logica pesada para las acciones.
 class Document extends Model
 {
     public const TEMA_ENABLED_TYPES = [

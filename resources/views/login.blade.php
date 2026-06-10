@@ -3,6 +3,7 @@
 @section('title', 'Acceso | Gestion de Cursos')
 
 @section('content')
+<!-- en login separo bien la parte de ambiente visual de la parte practica del formulario. -->
 <main class="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-10">
 	<div class="absolute inset-0">
 		<div class="absolute left-[10%] top-[12%] h-40 w-40 rounded-full bg-[rgba(124,45,60,0.14)] blur-3xl"></div>
@@ -18,23 +19,23 @@
 		<div class="guest-surface grid overflow-hidden rounded-[32px] lg:grid-cols-[1.1fr_0.9fr]">
 			<section class="hidden border-r border-[color:var(--line)] px-8 py-10 lg:flex lg:flex-col lg:justify-between xl:px-12">
 				<div>
-					<div class="inline-flex rounded-full border border-[color:var(--line)] bg-white/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Entorno de gestion</div>
-					<h1 class="mt-8 max-w-[14ch] text-4xl font-extrabold leading-tight text-[color:var(--ink)] xl:text-5xl">Una entrada mas clara, profesional y actual.</h1>
-					<p class="mt-6 max-w-[52ch] text-[15px] leading-8 text-[color:var(--muted)]">La plataforma centraliza cursos, PR, documentos, revisiones y notificaciones en una interfaz unificada pensada para el seguimiento academico diario.</p>
+					<div class="inline-flex rounded-full border border-[color:var(--line)] bg-white/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Antesala digital</div>
+					<h1 class="mt-8 max-w-[15ch] text-4xl font-extrabold leading-tight text-[color:var(--ink)] xl:text-5xl">Donde cada proyecto empieza con una pantalla en calma.</h1>
+					<p class="mt-6 max-w-[52ch] text-[15px] leading-8 text-[color:var(--muted)]">Menos ruido, más foco. Este acceso prepara el tono del trabajo: limpio, ordenado y con una presencia visual más cuidada para entrar directamente en contexto.</p>
 				</div>
 
 				<div class="grid gap-4 sm:grid-cols-3">
 					<article class="rounded-[24px] border border-[color:var(--line)] bg-white/70 p-5">
-						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Cursos</p>
-						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Acceso ordenado a los cursos disponibles por perfil.</p>
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Ritmo</p>
+						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Una entrada serena que evita saturar antes de empezar.</p>
 					</article>
 					<article class="rounded-[24px] border border-[color:var(--line)] bg-white/70 p-5">
-						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Revision</p>
-						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Seguimiento de PR, documentos y estados versionados.</p>
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Presencia</p>
+						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Tipografía, aire y contraste pensados para entrar con claridad.</p>
 					</article>
 					<article class="rounded-[24px] border border-[color:var(--line)] bg-white/70 p-5">
-						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Avisos</p>
-						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Notificaciones recientes para mantener la trazabilidad.</p>
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Entrada</p>
+						<p class="mt-3 text-[13px] leading-6 text-[color:var(--ink)]">Una primera impresión más humana y menos mecánica.</p>
 					</article>
 				</div>
 			</section>
@@ -43,7 +44,7 @@
 				<div class="mx-auto max-w-[420px]">
 					<p class="text-[11px] font-semibold uppercase tracking-[0.20em] text-[color:var(--accent-strong)]">Iniciar sesion</p>
 					<h2 class="mt-3 text-3xl font-extrabold text-[color:var(--ink)]">Accede a tu espacio de trabajo</h2>
-					<p class="mt-3 text-[14px] leading-7 text-[color:var(--muted)]">Usa tus credenciales para consultar cursos, PR, documentos y notificaciones desde una interfaz mas cuidada.</p>
+					<p class="mt-3 text-[14px] leading-7 text-[color:var(--muted)]">Usa tus credenciales para consultar cursos, proyectos, documentos y notificaciones desde una interfaz mas cuidada.</p>
 
 					@if ($errors->any())
 						<div id="login-error" class="mt-6 rounded-2xl border border-[rgba(160,63,81,0.22)] bg-[rgba(160,63,81,0.08)] px-4 py-3 text-[13px] text-[color:var(--danger)]">{{ $errors->first() }}</div>
@@ -67,10 +68,6 @@
 						<button type="submit" class="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-[color:var(--accent)] px-6 py-4 text-[12px] font-bold uppercase tracking-[0.20em] text-white shadow-[0_18px_36px_rgba(124,45,60,0.22)] transition hover:bg-[color:var(--accent-strong)] active:scale-[0.99]">Acceder a la aplicacion</button>
 					</form>
 
-					<div class="mt-8 rounded-[24px] border border-[color:var(--line)] bg-white/70 px-5 py-4">
-						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Acceso centralizado</p>
-						<p class="mt-2 text-[13px] leading-6 text-[color:var(--muted)]">Tras iniciar sesion, el sistema te llevara al perfil y desde ahi podras navegar a cursos, plantillas, tareas y notificaciones.</p>
-					</div>
 				</div>
 			</section>
 		</div>

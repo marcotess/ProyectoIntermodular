@@ -16,7 +16,6 @@ class PlantillaController extends Controller
         $plantillas = $plantillasAction->listAll();
         $documentTypes = $plantillasAction->documentTypes();
         $isGestor = Auth::check() && Auth::user()->hasRole('gestor');
-
         if ($request->is('api/*') || $request->expectsJson() || $request->wantsJson()) {
             return response()->json([
                 'plantillas' => $plantillas->map(function ($plantilla) {
@@ -48,9 +47,28 @@ class PlantillaController extends Controller
             'archivo' => ['required', 'file', 'mimes:doc,docx,pdf'],
         ]);
 
-        $plantilla = $plantillasAction->create($data['tipo_documento'], $request->file('archivo'));
+        try {
+            $plantilla = $plantillasAction->create($data['tipo_documento'], $request->file('archivo'));
+        } catch (RuntimeException $exception) {
+            if ($request->is('api/*') || $request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], 422);
+            }
 
-        return response()->json(['success' => (bool) $plantilla, 'plantilla_id' => $plantilla->id]);
+            return back()
+                ->withInput()
+                ->withErrors(['plantilla' => $exception->getMessage()]);
+        }
+
+        if ($request->is('api/*') || $request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => (bool) $plantilla, 'plantilla_id' => $plantilla->id]);
+        }
+
+        return redirect()
+            ->route('plantillas.index')
+            ->with('status', 'Plantilla creada correctamente.');
     }
 
     public function updateDocumentPlantilla(Request $request, $documentId)

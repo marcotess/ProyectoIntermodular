@@ -1,27 +1,29 @@
 @extends('layouts.dashboard')
 
-@section('title', 'PR | Gestion de Cursos')
+@section('title', 'Proyectos | Gestion de Cursos')
 @section('activeNav', 'courses')
-@section('pageTitle', 'PR del curso ' . $course->code)
-@section('pageSubtitle', 'Seguimiento de PR asociados a ' . $course->name . '. Desde aqui se mantiene la fase, la fecha limite y la asignacion docente del curso.')
+@section('pageTitle', 'Proyectos del curso ' . $course->code)
+@section('pageSubtitle', 'Seguimiento de proyectos asociados a ' . $course->name . '. Desde aqui se mantiene la fase, la fecha limite y la asignacion docente del curso.')
 
 @section('pageActions')
     @if($canManagePrs)
         <button class="ui-button-primary inline-flex items-center gap-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]" onclick="crearPR({{ $course->id }})">
             <span class="material-symbols-outlined text-[18px]">add</span>
-            Crear PR
+            Crear proyecto
         </button>
     @endif
 @endsection
 
 @section('content')
-@php($fasesPR = \App\Models\PR::PHASES)
+@php
+    $fasesPR = \App\Models\PR::PHASES;
+@endphp
 <div class="app-surface-strong overflow-hidden rounded-[28px] border border-[color:var(--line)]">
     <div class="overflow-x-auto user-scroll">
         <table class="page-table min-w-full border-collapse text-left text-[13px]">
             <thead>
                 <tr class="border-b border-[color:var(--line)]">
-                    <th class="px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">PR</th>
+                    <th class="px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Proyecto</th>
                     <th class="px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Fase</th>
                     <th class="px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Fecha limite</th>
                     <th class="px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Docentes</th>
@@ -36,7 +38,10 @@
                     @endphp
                     <tr class="border-b border-[color:var(--line)] last:border-b-0 align-top">
                         <td class="px-5 py-4">
-                            <a href="{{ route('pr.documentos.index', ['pr' => $pr->id]) }}" class="text-[15px] font-bold text-[color:var(--accent-strong)] hover:underline">PR {{ $pr->number }}</a>
+                            <a href="{{ route('pr.documentos.index', ['pr' => $pr->id]) }}" class="block hover:underline">
+                                <span class="text-[15px] font-bold text-[color:var(--accent-strong)]">{{ $pr->nombre ?: 'Proyecto ' . $pr->number }}</span>
+                                <span class="mt-1 block text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Proyecto {{ $pr->number }}</span>
+                            </a>
                         </td>
                         <td class="px-5 py-4 text-[color:var(--ink)] font-semibold">
                             @if($canEditPr)
@@ -101,11 +106,140 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-5 py-10 text-center text-[14px] text-[color:var(--muted)]">No hay PR registrados para este curso.</td>
+                        <td colspan="5" class="px-5 py-10 text-center text-[14px] text-[color:var(--muted)]">No hay proyectos registrados para este curso.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+    (function () {
+        function csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        }
+
+        async function postJson(url, payload) {
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken() || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(payload ?? {}),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            return { response, data };
+        }
+
+        function toggleVisibility(elementId, hidden) {
+            const element = document.getElementById(elementId);
+
+            if (!element) {
+                return;
+            }
+
+            element.classList.toggle('hidden', hidden);
+        }
+
+        window.crearPR = async function crearPR(courseId) {
+            const { response, data } = await postJson(`/courses/${courseId}/pr/create`);
+
+            if (!response.ok || !data.success) {
+                alert(data.message || 'Error al crear proyecto');
+                return;
+            }
+
+            window.location.reload();
+        };
+
+        window.cambiarFase = async function cambiarFase(prId) {
+            const fase = document.getElementById(`fase-select-${prId}`)?.value;
+            const { response, data } = await postJson(`/pr/${prId}/fase/update`, { fase });
+
+            if (!response.ok || !data.success) {
+                alert(data.message || 'Error al actualizar la fase');
+                window.location.reload();
+                return;
+            }
+
+            window.location.reload();
+        };
+
+        window.showEditFechaLimite = function showEditFechaLimite(prId) {
+            toggleVisibility(`fecha-limite-view-${prId}`, true);
+            toggleVisibility(`fecha-limite-edit-${prId}`, false);
+        };
+
+        window.hideEditFechaLimite = function hideEditFechaLimite(prId) {
+            toggleVisibility(`fecha-limite-edit-${prId}`, true);
+            toggleVisibility(`fecha-limite-view-${prId}`, false);
+        };
+
+        window.updateFechaLimite = async function updateFechaLimite(prId) {
+            const fecha = document.getElementById(`fecha-limite-input-${prId}`)?.value || null;
+            const { response, data } = await postJson(`/pr/${prId}/fecha_limite/update`, { fecha_limite: fecha });
+
+            if (!response.ok || !data.success) {
+                alert(data.message || 'Error al actualizar la fecha limite');
+                return;
+            }
+
+            window.location.reload();
+        };
+
+        window.showEditDocentes = function showEditDocentes(prId) {
+            toggleVisibility(`docentes-list-${prId}`, true);
+            toggleVisibility(`docentes-edit-${prId}`, false);
+        };
+
+        window.hideEditDocentes = function hideEditDocentes(prId) {
+            toggleVisibility(`docentes-edit-${prId}`, true);
+            toggleVisibility(`docentes-list-${prId}`, false);
+            window.hideAddDocente(prId);
+        };
+
+        window.showAddDocente = function showAddDocente(prId) {
+            toggleVisibility(`add-docente-select-${prId}`, false);
+        };
+
+        window.hideAddDocente = function hideAddDocente(prId) {
+            toggleVisibility(`add-docente-select-${prId}`, true);
+        };
+
+        window.addDocente = async function addDocente(prId) {
+            const docenteId = document.getElementById(`add-docente-${prId}`)?.value;
+
+            if (!docenteId) {
+                alert('No hay docentes disponibles para agregar');
+                return;
+            }
+
+            const { response, data } = await postJson(`/pr/${prId}/docentes/add`, { docentes: [docenteId] });
+
+            if (!response.ok || !data.success) {
+                alert(data.message || 'Error al agregar docente');
+                return;
+            }
+
+            window.location.reload();
+        };
+
+        window.removeDocente = async function removeDocente(prId, docenteId) {
+            const { response, data } = await postJson(`/pr/${prId}/docentes/remove/${docenteId}`);
+
+            if (!response.ok || !data.success) {
+                alert(data.message || 'Error al quitar docente');
+                return;
+            }
+
+            window.location.reload();
+        };
+    }());
+</script>
 @endsection

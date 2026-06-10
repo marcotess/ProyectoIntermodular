@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 
+// este de aqui tiene bastante faena porque junta documentos, permisos, revisores y datos para la vista.
 class PRDocumentController extends Controller
 {
     public function index(Request $request, $prId)
@@ -121,10 +122,22 @@ class PRDocumentController extends Controller
         try {
             $document = $createDocumentAction->createDocument($prId, $data['type'], Auth::id(), $data['tema'] ?? null);
         } catch (RuntimeException $exception) {
+            if (! ($request->is('api/*') || $request->expectsJson() || $request->wantsJson())) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['document' => $exception->getMessage()]);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage(),
             ], 422);
+        }
+
+        if (! ($request->is('api/*') || $request->expectsJson() || $request->wantsJson())) {
+            return redirect()
+                ->route('pr.documentos.index', ['pr' => $prId])
+                ->with('status', 'Documento creado correctamente.');
         }
 
         return response()->json(['success' => (bool) $document, 'document_id' => $document->id]);

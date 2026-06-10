@@ -9,7 +9,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
+// este controlador mezcla acceso web y API, asi que mejor dejar claro que aqui entra mucho trafico distinto.
 class AuthController extends Controller
 {
     /**
@@ -159,6 +161,47 @@ class AuthController extends Controller
         $latestNotification = $recentNotifications->first();
 
         return view('profile', compact('user', 'courses', 'recentNotifications', 'latestPr', 'latestNotification'));
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validateWithBag('settings', [
+            'receive_notification_emails' => ['nullable', 'boolean'],
+            'theme_preference' => ['required', 'string', Rule::in(['light', 'dark'])],
+            'compact_tables' => ['nullable', 'boolean'],
+            'reduce_motion' => ['nullable', 'boolean'],
+            'show_quick_notifications' => ['nullable', 'boolean'],
+        ]);
+
+        $user->forceFill([
+            'receive_notification_emails' => $request->boolean('receive_notification_emails'),
+            'theme_preference' => $data['theme_preference'],
+            'compact_tables' => $request->boolean('compact_tables'),
+            'reduce_motion' => $request->boolean('reduce_motion'),
+            'show_quick_notifications' => $request->boolean('show_quick_notifications'),
+        ])->save();
+
+        return redirect()
+            ->route('profile')
+            ->with('settings_status', 'Ajustes actualizados correctamente.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $data = $request->validateWithBag('passwordUpdate', [
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $request->user()->forceFill([
+            'password' => Hash::make($data['password']),
+        ])->save();
+
+        return redirect()
+            ->route('profile')
+            ->with('password_status', 'Contrasena actualizada correctamente.');
     }
 
     /**

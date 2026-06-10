@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\PR;
 
+// aqui dejo reunidos cambios pequeños de PR para no repetir reglas tontas en varios sitios.
 class PRsAction
 {
     /**
@@ -25,6 +26,18 @@ class PRsAction
     {
         $pr = PR::findOrFail($prId);
         $pr->fase = $fase;
+        $pr->save();
+
+        return true;
+    }
+
+    /**
+     * Actualiza el nombre de un PR.
+     */
+    public function updateNombre($prId, $nombre)
+    {
+        $pr = PR::findOrFail($prId);
+        $pr->nombre = $nombre;
         $pr->save();
 
         return true;

@@ -15,7 +15,6 @@ class ModelActivityObserver
     public function __construct(private readonly UserActivityLogger $activityLogger)
     {
     }
-
     public function created(Model $model): void
     {
         $this->activityLogger->logModel('model.created', $model, [

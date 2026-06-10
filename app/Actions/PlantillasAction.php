@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+// esta parte mueve las plantillas y deja fuera del controlador lo relacionado con ficheros y busquedas.
 class PlantillasAction
 {
     private const DOCUMENT_TYPE_PREFIXES = [

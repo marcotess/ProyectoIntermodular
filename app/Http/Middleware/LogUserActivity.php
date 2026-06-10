@@ -17,7 +17,6 @@ class LogUserActivity
     public function __construct(private readonly UserActivityLogger $activityLogger)
     {
     }
-
     /**
      * deja pasar la peticion y solo registra al final si la respuesta fue
      * correcta y el método HTTPindica

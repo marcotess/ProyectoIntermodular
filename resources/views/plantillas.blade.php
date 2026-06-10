@@ -7,7 +7,7 @@
 
 @section('pageActions')
     @if($isGestor)
-        <button onclick="showCreatePlantillaForm()" class="ui-button-primary inline-flex items-center gap-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">
+        <button type="button" onclick="document.getElementById('create-plantilla-form')?.classList.remove('hidden')" class="ui-button-primary inline-flex items-center gap-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">
             <span class="material-symbols-outlined text-[18px]">add</span>
             Crear plantilla
         </button>
@@ -15,46 +15,59 @@
 @endsection
 
 @section('content')
+@php
+    $showCreatePlantillaForm = $errors->any() || session('status');
+@endphp
 <div class="grid gap-6">
     @if($isGestor)
-        <div id="create-plantilla-form" class="app-surface-strong hidden rounded-[28px] p-6 lg:max-w-[560px]">
+        <div id="create-plantilla-form" class="{{ $showCreatePlantillaForm ? '' : 'hidden' }} app-surface-strong rounded-[28px] p-6 lg:max-w-[560px]">
             <div class="flex items-center justify-between gap-4">
                 <div>
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">Nueva plantilla</p>
                     <h2 class="mt-2 text-xl font-extrabold text-[color:var(--ink)]">Alta de plantilla</h2>
                 </div>
-                <button onclick="hideCreatePlantillaForm()" class="rounded-full border border-[color:var(--line)] bg-white p-2 text-[color:var(--accent-strong)] transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--accent-soft)]" title="Cerrar">
+                <button type="button" onclick="document.getElementById('create-plantilla-form')?.classList.add('hidden')" class="rounded-full border border-[color:var(--line)] bg-white p-2 text-[color:var(--accent-strong)] transition hover:border-[color:var(--line-strong)] hover:bg-[color:var(--accent-soft)]" title="Cerrar">
                     <span class="material-symbols-outlined text-[18px]">close</span>
                 </button>
             </div>
 
-            <div class="mt-5 space-y-4">
+            @if(session('status'))
+                <div class="mt-5 rounded-2xl border border-[rgba(47,111,89,0.22)] bg-[rgba(47,111,89,0.08)] px-4 py-3 text-[13px] text-[color:var(--success)]">{{ session('status') }}</div>
+            @endif
+
+            @if($errors->any())
+                <div class="mt-5 rounded-2xl border border-[rgba(160,63,81,0.22)] bg-[rgba(160,63,81,0.08)] px-4 py-3 text-[13px] text-[color:var(--danger)]">{{ $errors->first() }}</div>
+            @endif
+
+            <form method="POST" action="{{ route('plantillas.create') }}" enctype="multipart/form-data" class="mt-5 space-y-4">
+                @csrf
+
                 <div>
                     <label for="plantilla-tipo-documento" class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Tipo de documento</label>
-                    <select id="plantilla-tipo-documento" class="ui-select w-full rounded-2xl px-4 py-3 text-[14px]">
+                    <select id="plantilla-tipo-documento" name="tipo_documento" class="ui-select w-full rounded-2xl px-4 py-3 text-[14px]" required>
                         <option value="" selected disabled>Selecciona un tipo</option>
                         @foreach($documentTypes as $type)
-                            <option value="{{ $type }}">{{ str_replace('_', ' ', $type) }}</option>
+                            <option value="{{ $type }}" @selected(old('tipo_documento') === $type)>{{ str_replace('_', ' ', $type) }}</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div>
                     <label for="plantilla-archivo" class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Archivo adjunto</label>
-                    <input id="plantilla-archivo" type="file" accept=".doc,.docx,.pdf" class="ui-field w-full rounded-2xl px-4 py-3 text-[14px] file:mr-3 file:rounded-full file:border-0 file:bg-[color:var(--accent)] file:px-4 file:py-2 file:text-[11px] file:font-semibold file:uppercase file:tracking-[0.16em] file:text-white" />
+                    <input id="plantilla-archivo" name="archivo" type="file" accept=".doc,.docx,.pdf" required class="ui-field w-full rounded-2xl px-4 py-3 text-[14px] file:mr-3 file:rounded-full file:border-0 file:bg-[color:var(--accent)] file:px-4 file:py-2 file:text-[11px] file:font-semibold file:uppercase file:tracking-[0.16em] file:text-white" />
                 </div>
 
                 <p class="text-[13px] leading-7 text-[color:var(--muted)]">El prefijo se calcula automaticamente a partir del tipo de documento y la version correlativa asociada a la plantilla.</p>
 
                 <div class="flex flex-wrap gap-3">
-                    <button onclick="createPlantilla()" class="ui-button-primary rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Crear</button>
-                    <button onclick="hideCreatePlantillaForm()" class="ui-button-soft rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Cancelar</button>
+                    <button type="submit" class="ui-button-primary rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Crear</button>
+                    <button type="button" onclick="document.getElementById('create-plantilla-form')?.classList.add('hidden')" class="ui-button-soft rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Cancelar</button>
                 </div>
-            </div>
+            </form>
         </div>
     @endif
 
-    <div class="app-surface-strong overflow-hidden rounded-[28px] border border-[color:var(--line)]">
+    <div id="plantillas-list" class="app-surface-strong overflow-hidden rounded-[28px] border border-[color:var(--line)]">
         <div class="overflow-x-auto user-scroll">
             <table class="page-table min-w-full border-collapse text-left text-[13px]">
                 <thead>

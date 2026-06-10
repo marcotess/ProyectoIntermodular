@@ -12,7 +12,6 @@ use Illuminate\Queue\SerializesModels;
 class DocumentStatusNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
-
     // consstructor de las propiedades necesarias para el correo
     public function __construct(
         public readonly User $recipient,

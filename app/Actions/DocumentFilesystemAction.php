@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 
+// aqui llevo la parte fisica de archivos, por que luego buscar rutas sueltas por el proyecto es un dolor.
 class DocumentFilesystemAction
 {
     private const DISK = 'public';
@@ -75,6 +76,22 @@ class DocumentFilesystemAction
         if ($path) {
             Storage::disk(self::DISK)->delete($path);
         }
+    }
+
+    public function resolveVariantPath(DocumentVariant $variant): ?string
+    {
+        return $this->variantPathFromUrl($variant->drive_link_url);
+    }
+
+    public function requireVariantPath(DocumentVariant $variant): string
+    {
+        $path = $this->resolveVariantPath($variant);
+
+        if (! $path || ! Storage::disk(self::DISK)->exists($path)) {
+            throw new RuntimeException('La variante seleccionada no tiene un archivo disponible.');
+        }
+
+        return $path;
     }
 
     // reemplaza el archivo de una variante por una copia fresca de la plantilla actual

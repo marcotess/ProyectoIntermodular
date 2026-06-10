@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [AuthController::class, 'showLogin']);
@@ -15,8 +16,13 @@ Route::middleware(['auth'])->group(function () {
     // Rutas comunes para cualquier usuario autenticado.
     Route::get('/home', [AuthController::class, 'profile'])->name('home');
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::post('/profile/settings', [AuthController::class, 'updateSettings'])->name('profile.settings.update');
+    Route::post('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password.update');
     Route::get('/courses', [AuthController::class, 'courses'])->name('courses.index');
-    Route::view('/tareas', 'tareas')->name('tasks.index');
+    Route::get('/tareas', [App\Http\Controllers\TaskController::class, 'index'])->name('tasks.index');
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/contact/{contact}', [ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/contact/{contact}/messages', [ChatController::class, 'store'])->name('chat.messages.store');
     Route::get('/notificaciones', [App\Http\Controllers\NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::get('/notificaciones/{notificacion}', [App\Http\Controllers\NotificacionController::class, 'open'])->name('notificaciones.open');
 
@@ -27,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Vista y operaciones de lectura sobre la documentacion del PR.
     Route::get('/pr/{pr}/documentos', [App\Http\Controllers\PRDocumentController::class, 'index'])->name('pr.documentos.index');
+    Route::get('/variant/{variant}/open', [App\Http\Controllers\VariantController::class, 'open'])->name('variant.open');
 
     // Actualizacion de estados de variantes accesible segun permisos de negocio.
     Route::post('/variant/{variant}/status/update', [App\Http\Controllers\VariantController::class, 'updateStatus'])->name('variant.status.update');
@@ -48,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/document/{document}/tema/update', [App\Http\Controllers\PRDocumentController::class, 'updateTema'])->name('document.tema.update');
         Route::post('/variant/{variant}/remove', [App\Http\Controllers\VariantController::class, 'remove'])->name('variant.remove');
         Route::post('/pr/{pr}/fecha_limite/update', [App\Http\Controllers\PRDocenteController::class, 'updateFechaLimite'])->name('pr.fecha_limite.update');
+        Route::post('/pr/{pr}/nombre/update', [App\Http\Controllers\PRController::class, 'updateNombre'])->name('pr.nombre.update');
         Route::post('/pr/{pr}/fase/update', [App\Http\Controllers\PRController::class, 'cambiarFase'])->name('pr.fase.update');
     });
 

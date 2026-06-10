@@ -16,7 +16,6 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
-
     public function boot(): void
     {
         // Se registran observers genéricos para los modelos definidos en la

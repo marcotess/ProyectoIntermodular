@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// el PR hace de nucleo del seguimiento, por eso desde aqui cuelgan muchas relaciones clave.
 class PR extends Model
 {
     protected $table = 'prs';
@@ -19,7 +20,7 @@ class PR extends Model
         'Finalizado',
     ];
 
-    protected $fillable = ['course_id', 'number', 'deadline', 'fecha_limite', 'fase'];
+    protected $fillable = ['course_id', 'number', 'nombre', 'deadline', 'fecha_limite', 'fase'];
 
     public function course()
     {

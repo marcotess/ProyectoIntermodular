@@ -1,5 +1,6 @@
 import './bootstrap';
 
+// funciones base del frontend: utilidades, llamadas JSON y pequeños gestos de la interfaz.
 function toggleVisibility(elementId, hidden) {
     const element = document.getElementById(elementId);
 
@@ -8,6 +9,15 @@ function toggleVisibility(elementId, hidden) {
     }
 
     element.classList.toggle('hidden', hidden);
+    element.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+}
+
+function setExpandedState(control, expanded) {
+    if (!control) {
+        return;
+    }
+
+    control.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 }
 
 function csrfToken() {
@@ -31,33 +41,46 @@ function clearApiToken() {
     window.localStorage.removeItem('api_token');
 }
 
-function apiUrl(url) {
+function requestUrl(url, useApi = false) {
     if (/^https?:\/\//.test(url) || url.startsWith('/api/')) {
         return url;
     }
 
-    return `/api${url.startsWith('/') ? url : `/${url}`}`;
+    const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+
+    return useApi ? `/api${normalizedUrl}` : normalizedUrl;
 }
 
 async function requestJson(url, options = {}) {
     // Si el body es FormData no hay que forzar Content-Type JSON.
     const isFormData = options.body instanceof FormData;
+    const useApi = options.api === true;
     const token = apiToken();
     const headers = {
         'Accept': 'application/json',
         ...(options.headers || {}),
     };
 
-    if (token) {
+    if (useApi && token) {
         // Sanctum autentica la API leyendo el Bearer token desde Authorization.
         headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (!useApi) {
+        const token = csrfToken();
+
+        if (token) {
+            headers['X-CSRF-TOKEN'] = token;
+        }
+
+        headers['X-Requested-With'] = 'XMLHttpRequest';
     }
 
     if (!isFormData) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(apiUrl(url), {
+    const response = await fetch(requestUrl(url, useApi), {
         ...options,
         credentials: 'same-origin',
         headers,
@@ -74,12 +97,15 @@ async function requestJson(url, options = {}) {
 
 async function loginWithApi(form) {
     const formData = new FormData(form);
+
+    // saco solo lo que necesito del formulario para no mandar ruido de mas.
     const payload = {
         email: formData.get('email'),
         password: formData.get('password'),
     };
 
     const { response, data } = await requestJson('/login', {
+        api: true,
         method: 'POST',
         body: JSON.stringify(payload),
     });
@@ -91,6 +117,7 @@ function documentTemaTypes() {
     return Array.isArray(window.documentTemaTypes) ? window.documentTemaTypes : [];
 }
 
+// esto decide si el tipo de documento necesita tema; parece pequeño pero afecta a bastante UI.
 function typeSupportsTema(type) {
     return documentTemaTypes().includes(type);
 }
@@ -114,13 +141,31 @@ function syncCreateDocumentTemaInput() {
     }
 }
 
+function togglePanelById(panelId, hidden) {
+    if (!panelId) {
+        return;
+    }
+
+    toggleVisibility(panelId, hidden);
+}
+
 window.toggleSidebar = function toggleSidebar() {
     document.body.classList.toggle('sidebar-closed');
     document.body.classList.toggle('sidebar-open');
 };
 
 window.toggleUserDropdown = function toggleUserDropdown() {
-    document.getElementById('userDropdown')?.classList.toggle('hidden');
+    const dropdown = document.querySelector('[data-user-dropdown]');
+    const trigger = document.querySelector('[data-user-dropdown-trigger]');
+
+    if (!dropdown) {
+        return;
+    }
+
+    const willHide = !dropdown.classList.contains('hidden');
+    dropdown.classList.toggle('hidden');
+    dropdown.setAttribute('aria-hidden', willHide ? 'true' : 'false');
+    setExpandedState(trigger, !willHide);
 };
 
 window.showCreatePlantillaForm = function showCreatePlantillaForm() {
@@ -141,9 +186,9 @@ window.createPlantilla = async function createPlantilla() {
         return;
     }
 
-    // Y tambien necesita el archivo de Word.
+    // Y tambien necesita el archivo que se usara como plantilla.
     if (!archivo?.files?.length) {
-        alert('Adjunta un archivo .doc o .docx');
+        alert('Adjunta un archivo .doc, .docx o .pdf');
         return;
     }
 
@@ -287,11 +332,13 @@ window.hideAddRevisor = function hideAddRevisor(documentId) {
 
 window.showCreateDocumentForm = function showCreateDocumentForm() {
     toggleVisibility('create-document-form', false);
+    setExpandedState(document.querySelector('[data-document-form-toggle]'), true);
     syncCreateDocumentTemaInput();
 };
 
 window.hideCreateDocumentForm = function hideCreateDocumentForm() {
     toggleVisibility('create-document-form', true);
+    setExpandedState(document.querySelector('[data-document-form-toggle]'), false);
     const temaInput = document.getElementById('document-tema');
 
     if (temaInput) {
@@ -490,25 +537,31 @@ window.removeDocument = async function removeDocument(documentId) {
 };
 
 document.addEventListener('click', (event) => {
-    const dropdown = document.getElementById('userDropdown');
-    const trigger = event.target.closest('button');
+    const dropdown = document.querySelector('[data-user-dropdown]');
+    const trigger = event.target.closest('[data-user-dropdown-trigger]');
 
     if (!dropdown) {
         return;
     }
 
-    if (trigger && trigger.getAttribute('onclick')?.includes('toggleUserDropdown')) {
+    if (trigger) {
         return;
     }
 
     if (!dropdown.contains(event.target) && !dropdown.classList.contains('hidden')) {
         dropdown.classList.add('hidden');
+        dropdown.setAttribute('aria-hidden', 'true');
+        setExpandedState(document.querySelector('[data-user-dropdown-trigger]'), false);
     }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.querySelector('[data-api-login-form]');
     const documentTypeSelect = document.getElementById('document-type');
+    const dropdownTrigger = document.querySelector('[data-user-dropdown-trigger]');
+    const logoutButtons = document.querySelectorAll('[data-logout-button]');
+    const panelToggles = document.querySelectorAll('[data-panel-toggle]');
+    const panelHideButtons = document.querySelectorAll('[data-panel-hide]');
 
     if (loginForm) {
         const errorBox = document.getElementById('login-error');
@@ -543,10 +596,58 @@ document.addEventListener('DOMContentLoaded', () => {
         documentTypeSelect.addEventListener('change', syncCreateDocumentTemaInput);
         syncCreateDocumentTemaInput();
     }
+
+    if (dropdownTrigger) {
+        setExpandedState(dropdownTrigger, false);
+        dropdownTrigger.addEventListener('click', () => {
+            window.toggleUserDropdown();
+        });
+    }
+
+    const dropdown = document.querySelector('[data-user-dropdown]');
+
+    if (dropdown) {
+        dropdown.setAttribute('aria-hidden', dropdown.classList.contains('hidden') ? 'true' : 'false');
+    }
+
+    logoutButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            await window.logoutUser();
+        });
+    });
+
+    panelToggles.forEach((button) => {
+        button.addEventListener('click', () => {
+            const panelId = button.dataset.panelToggle;
+            const panel = panelId ? document.getElementById(panelId) : null;
+
+            if (!panel) {
+                return;
+            }
+
+            const willHide = !panel.classList.contains('hidden');
+
+            panel.classList.toggle('hidden');
+            panel.setAttribute('aria-hidden', willHide ? 'true' : 'false');
+            setExpandedState(button, !willHide);
+        });
+    });
+
+    panelHideButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            togglePanelById(button.dataset.panelHide, true);
+            const panelId = button.dataset.panelHide;
+            const relatedToggle = panelId ? document.querySelector('[data-panel-toggle="' + panelId + '"]') : null;
+
+            setExpandedState(relatedToggle, false);
+        });
+    });
 });
 
 window.logoutUser = async function logoutUser() {
+    const useApi = Boolean(apiToken());
     const { response } = await requestJson('/logout', {
+        api: useApi,
         method: 'POST',
     });
 

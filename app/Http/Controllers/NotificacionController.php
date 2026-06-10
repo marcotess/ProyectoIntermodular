@@ -13,7 +13,6 @@ class NotificacionController extends Controller
     public function index(Request $request, NotificacionAction $notificacionAction)
     {
         $notificaciones = $notificacionAction->listForUser(Auth::user());
-
         if ($request->is('api/*') || $request->expectsJson() || $request->wantsJson()) {
             return response()->json($notificaciones->map(function (Notificacion $notificacion) {
                 return [

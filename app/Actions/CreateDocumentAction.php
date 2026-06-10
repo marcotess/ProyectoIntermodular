@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+// en esta clase vive buena parte del trabajo serio de documentos, asi no queda todo desperdigado por ahi.
 class CreateDocumentAction
 {
 	/**

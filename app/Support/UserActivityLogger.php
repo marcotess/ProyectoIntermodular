@@ -23,7 +23,6 @@ class UserActivityLogger
         if (! config('activitylog.enabled')) {
             return;
         }
-
         Log::channel($this->channel('auth'))->info($this->message($event), $this->mergeContext($context));
     }
     public function logModel(string $event, Model $model, array $context = []): void

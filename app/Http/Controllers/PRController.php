@@ -8,13 +8,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+// este controlador gestiona los PR de cara a la vista y a la API sin montar otra capa rara por encima.
 class PRController extends Controller
 {
+    private function resolveAccessiblePr(int $prId): array
+    {
+        $user = Auth::user();
+        $pr = PR::with(['course', 'documents.reviewers', 'teachers'])->findOrFail($prId);
+
+        abort_unless($user->canAccessPr($pr), 403);
+
+        return [$pr, $user];
+    }
+
     private function formatPr(PR $pr): array
     {
         return [
             'id' => $pr->id,
-            'nombre' => 'PR ' . $pr->number,
+            'nombre' => $pr->nombre ?: 'Proyecto ' . $pr->number,
             'numero' => $pr->number,
             'fase' => $pr->fase,
             'fecha_limite' => $pr->fecha_limite,
@@ -84,6 +95,10 @@ class PRController extends Controller
 
     public function create(Request $request, $courseId)
     {
+        $course = Course::query()->findOrFail($courseId);
+
+        abort_unless(Auth::user()->canAccessCourse($course), 403);
+
         $pr = app(\App\Actions\CreatePRAction::class)->execute($courseId);
 
         return response()->json(['success' => (bool) $pr, 'pr_id' => $pr->id]);
@@ -91,11 +106,26 @@ class PRController extends Controller
 
     public function cambiarFase(Request $request, $prId)
     {
+        [$pr] = $this->resolveAccessiblePr((int) $prId);
+
         $validated = $request->validate([
             'fase' => ['required', 'string', Rule::in(PR::PHASES)],
         ]);
 
-        $result = app(\App\Actions\PRsAction::class)->cambiarFase($prId, $validated['fase']);
+        $result = app(\App\Actions\PRsAction::class)->cambiarFase($pr->id, $validated['fase']);
+
+        return response()->json(['success' => $result]);
+    }
+
+    public function updateNombre(Request $request, $prId)
+    {
+        [$pr] = $this->resolveAccessiblePr((int) $prId);
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+        ]);
+
+        $result = app(\App\Actions\PRsAction::class)->updateNombre($pr->id, trim($validated['nombre']));
 
         return response()->json(['success' => $result]);
     }

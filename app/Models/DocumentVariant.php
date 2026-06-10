@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Actions\NotificacionAction;
 use Illuminate\Database\Eloquent\Model;
 
+// cada variante representa una version concreta, asi que este modelo tiene bastante peso real en el flujo.
 class DocumentVariant extends Model
 {
     protected $fillable = ['document_id', 'version', 'status_id', 'deadline_target', 'drive_link_url', 'created_by'];

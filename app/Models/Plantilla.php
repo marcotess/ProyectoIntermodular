@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Plantilla extends Model
 {
     public $timestamps = false;
-
     protected $table = 'plantillas';
 
     protected $fillable = ['tipo_documento', 'prefijo', 'version'];

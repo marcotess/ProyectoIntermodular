@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+// esta entrada API es la parte mas util para peticiones JS y clientes externos, aunque ahora siga bastante recogida.
 // /api/login devuelve un token Sanctum; el resto de rutas /api exigen Bearer token válido.
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum')->name('api.logout');
@@ -37,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/document/{document}/tema/update', [App\Http\Controllers\PRDocumentController::class, 'updateTema'])->name('api.document.tema.update');
             Route::post('/variant/{variant}/remove', [App\Http\Controllers\VariantController::class, 'remove'])->name('api.variant.remove');
             Route::post('/pr/{pr}/fecha_limite/update', [App\Http\Controllers\PRDocenteController::class, 'updateFechaLimite'])->name('api.pr.fecha_limite.update');
+            Route::post('/pr/{pr}/nombre/update', [App\Http\Controllers\PRController::class, 'updateNombre'])->name('api.pr.nombre.update');
             Route::post('/pr/{pr}/fase/update', [App\Http\Controllers\PRController::class, 'cambiarFase'])->name('api.pr.fase.update');
         });
 });

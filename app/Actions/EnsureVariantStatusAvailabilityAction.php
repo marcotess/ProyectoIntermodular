@@ -6,6 +6,7 @@ use App\Models\DocumentStatus;
 use App\Models\DocumentVariant;
 use RuntimeException;
 
+// esta accion comprueba que los cambios de estado tengan sentido y no se pueda avanzar porque si.
 class EnsureVariantStatusAvailabilityAction
 {
     //funcion que crea las reglas de negocio sobre las variantes

@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+// aqui se actualiza documento y variante intentando que nombres, estado y archivo no se separen entre si.
 class UpdateDocumentAction
 {
 	public function listVariantStatuses(): Collection

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// notificacion simple, pero muy necesaria para que el usuario no vaya medio a ciegas.
 class Notificacion extends Model
 {
     protected $table = 'notificaciones';

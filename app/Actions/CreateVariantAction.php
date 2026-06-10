@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 
 
+// esta clase monta variantes nuevas y deja el alta un poco mas ordenada.
 class CreateVariantAction
 {
     public function create(Document $document, int $userId): DocumentVariant
